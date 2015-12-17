@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import usr.fiiaurelian.cryptography.AESWrapper;
+
 public class Instance extends Thread {
 	
 	public static final String CBC_REQUEST = "CBC";
@@ -14,11 +16,11 @@ public class Instance extends Thread {
 	private static final int TIMEOUT = 10000;
 	
 	private ServerSocket serverSocket;
-	private String cbcKey;
-	private String ofbKey;
-	private String encKey;
-	private String cbcInitializationVector;
-	private String ofbInitializationVector;
+	private String       cbcKey;
+	private String       ofbKey;
+	private String       encKey;
+	private String       cbcInitializationVector;
+	private String       ofbInitializationVector;
 	
 	public Instance( Integer port ) {
 		try {
@@ -41,36 +43,47 @@ public class Instance extends Thread {
 		return this;
 	}
 	
+	public Instance withEncryptionKey( String key ) {
+		this.encKey = key;
+		return this;
+	}
+	
 	@Override
 	public void run() {
 		for( ;; ) {
 			try {
 				Socket instance = serverSocket.accept();
+				System.out.println( "S-a conectat: " + instance.getInetAddress() );
 				DataInputStream in = new DataInputStream( instance.getInputStream() );
 				DataOutputStream out = new DataOutputStream( instance.getOutputStream() );
 				String type = in.readUTF();
-				out.writeUTF( computeAnswerForRequest( type ) );
+				System.out.println( "Cere cheia pentru: " + type );
+				String answer = computeAnswerForRequest( type );
+				out.writeUTF( answer );
+				System.out.println( "Transmit: " + answer );
+				System.out.println( "Am transmis cheia si IV pentru " + type );
 				instance.close();
-			} catch ( IOException ioException ) {
+			} catch ( Exception ioException ) {
 				System.err.println( ioException.getMessage() );
 			}
 			
 		}
 	}
 	
-	private String computeAnswerForRequest( String request ) {
+	private String computeAnswerForRequest( String request ) throws Exception {
 		String answer;
+		AESWrapper aes = new AESWrapper();
 		switch( request.toUpperCase() ) {
 		case CBC_REQUEST:
-			answer = cbcKey;
+			answer = cbcKey + "$" + cbcInitializationVector;
 			break;
 		case OFB_REQUEST:
-			answer = ofbKey;
+			answer = ofbKey + "$" + ofbInitializationVector;
 			break;
 		default:
 			answer = null;
 		}
-		return answer;
+		return aes.encrypt( answer, encKey );
 	}
 
 }
