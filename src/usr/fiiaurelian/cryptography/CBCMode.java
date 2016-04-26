@@ -47,7 +47,7 @@ public class CBCMode extends OperationMode {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String message = "Aurelian este seful lui Nicolae Berendea!";
+		String message = "This is a sample text!";
 		String key = "00112233445566778889aabbccddeeff";
 		String padding = "00112233445566778889aabbcccdeeff";
 		CBCMode cbc = new CBCMode();
